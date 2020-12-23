@@ -17,21 +17,14 @@ public class NIOServer {
     //业务线程池
     static ExecutorService pool = Executors.newFixedThreadPool(100);
 
-    //1 多路复用器
     private Selector selector;
 
-    //构造函数
     public NIOServer(int port){
         try {
-            //1 打开多路复用器
-            this.selector=Selector.open();
-            //2 打开服务器通道
+            this.selector = Selector.open();
             ServerSocketChannel ssc = ServerSocketChannel.open();
-            //3 设置服务器通道为非阻塞方式
             ssc.configureBlocking(false);
-            //4 绑定ip
             ssc.bind(new InetSocketAddress(port));
-            //5 把服务器通道注册到多路复用器上,只有非阻塞信道才可以注册选择器.并在注册过程中指出该信道可以进行Accept操作
             ssc.register(this.selector, SelectionKey.OP_ACCEPT);
             System.out.println("服务正在监听：" + port);
         } catch (IOException e) {
@@ -87,9 +80,7 @@ public class NIOServer {
 
     }
 
-    //从客户端通道获取数据并进行处理
     private void read(SelectionKey key) {
-        //2 获取之前注册的socket通道对象
         SocketChannel sc = (SocketChannel) key.channel();
         String reqData = "";
         try{
@@ -97,7 +88,7 @@ public class NIOServer {
             int count = sc.read(readBuf);
             if(count <= 0){
                 key.cancel();
-//                key.channel().close();
+                sc.close();
                 return;
             }
             readBuf.flip();
@@ -118,9 +109,10 @@ public class NIOServer {
                 long threadId = Thread.currentThread().getId();
                 System.out.println(threadId + ",request msg:" + body);
 //                Thread.sleep(10000);
-                System.out.println(threadId + ",response msg: nihao");
+                String msg = "你好";
+                System.out.println(threadId + ",response msg: "+msg);
                 ByteBuffer writeBuf = ByteBuffer.allocate(100);
-                writeBuf.put("nihao".getBytes());
+                writeBuf.put(msg.getBytes());
                 //对缓冲区进行复位
                 writeBuf.flip();
 
